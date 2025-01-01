@@ -7,9 +7,9 @@ import commentRoute from "./routes/comment.js"
 import authRoute from "./routes/auth.js"
 import cookieParser from "cookie-parser"
 import cors from "cors"
-import path from "path"
 
-const __dirname = path.resolve()
+
+
 
 
 
@@ -20,7 +20,7 @@ dotenv.config()
 
 
 
-app.use("/uploads", express.static(path.join(__dirname, "uploads")))
+
 
 const corsOptions = {
     origin: 'http://localhost:5173',

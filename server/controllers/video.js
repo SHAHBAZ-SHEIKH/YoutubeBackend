@@ -1,105 +1,20 @@
 import Video from "../modals/Video.js"
 import { createError } from "../error.js"
 import User from "../modals/Users.js"
-import multer from "multer";
-import path from "path";
-import fs from "fs";
-import express from "express"
-
-const app = express()
-
-const __dirname = path.resolve();
-
-app.use(express.urlencoded({ extended: true }));
 
 
 
-// Configure Multer for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      const uploadPath = path.join(__dirname, "..", "uploads"); // Ensure the uploads directory is correct
-      if (!fs.existsSync(uploadPath)) {
-        fs.mkdirSync(uploadPath, { recursive: true });
-      }
-      cb(null, uploadPath); // Set the destination to the uploads folder
-    },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      cb(null, uniqueSuffix + "-" + file.originalname);
-    },
-  });
-
-  const upload = multer({ storage });
-
+  
 // Add Video Controller
 export const addVideo = async (req, res, next) => {
-    console.log("req.body",req.body)
-  // Use multer middleware to handle file uploads
-  upload.fields([
-    { name: "video", maxCount: 1 }, // Expect one video file
-    { name: "image", maxCount: 1 }, // Expect one image file
-  ])(req, res, async (err) => {
-    console.log("req.files",req.files)
-    if (err) {
-      return next(createError(500, "File upload failed: " + err.message));
-    }
-
-    
-
-    // Ensure files and required fields are provided
-    const videoFile = req.files?.video?.[0];
-    const imageFile = req.files?.image?.[0];
-    const { title, description, tags } = req.body;
-
-    if(!title){
-        return next(createError(400, "Title is required"));
-    }
-
-
-    if(!description){
-        return next(createError(400, "Description is required"));
-    }
-
-    if(!tags){
-        return next(createError(400, "Tags are required")); 
-    }
-    if(!videoFile){
-        return next(createError(400, "Video file is required"));
-    }
-    if(!imageFile){
-        return next(createError(400, "Image file is required"));
-    }
-
-    // if (!imageFile || !title || !desc || !tags) {
-    //   return next(createError(400, "Missing required fields or files"));
-    // }
-    // if (!videoFile) {
-    //   return next(createError(400, "Video file is required"));
-    // }
-    
-
-    // Construct file URLs (assuming a static server serves the 'uploads' folder)
-    const videoUrl = `uploads/${videoFile.filename}`;
-    const imageUrl = `uploads/${imageFile.filename}`;
-
-    // Create a new video record
-    const newVideo = new Video({
-      userId: req.user.id, // Assuming `req.user` contains authenticated user info
-      title,
-      description,
-      tags: tags.split(","),
-      videoUrl, // Save video file URL
-      imageUrl, // Save image file URL
-    });
-
+    const newVideo = new Video({ userId: req.user.id, ...req.body });
     try {
       const savedVideo = await newVideo.save();
-      res.status(200).json({ success: true, video: savedVideo });
-    } catch (error) {
-      next(error);
+      res.status(200).json(savedVideo);
+    } catch (err) {
+      next(err);
     }
-  });
-};
+  };
 
 
 export const updateVideo = async (req, res, next) => {
